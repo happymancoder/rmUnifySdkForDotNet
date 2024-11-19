@@ -100,7 +100,7 @@ namespace RM.Unify.Sdk.Client
         /// Your app should then redirect the user to returnUrl (if set) or to the default URL for this user in your app.
         /// </summary>
         /// <param name="user">User profile</param>
-        /// <param name="maxSessionEnd">Maxiumum time after which reauthentication should be prompted</param>
+        /// <param name="maxSessionEnd">Maximum time after which reauthentication should be prompted</param>
         /// <param name="returnUrl">Return URL specified in login request (null if none)</param>
         public abstract void DoLogin(RmUnifyUser user, DateTime maxSessionEnd, string returnUrl);
 
@@ -113,7 +113,10 @@ namespace RM.Unify.Sdk.Client
         /// As well as implementing this method, you will also need to call Logout() on the RmUnifyClientApi if someone
         /// clicks the logout button in your app (after deleting your session cookie).
         /// </summary>
-        public abstract void DoLogout();
+        /// <param name="userId">the user’s IdentityGuid or PersistentId, URL-encoded</param>
+        /// <param name="issueInstant">the UTC time of the logout request, URL-encoded</param>
+        /// <param name="signature">the signature is generated from the userId and the issueInstant, prior to URL-encoding</param>
+        public abstract void DoLogout(string userId, string issueInstant, string signature);
 
         /// <summary>
         /// Check that a pre-existing organization that has been linked to RM Unify is licenced in your app.

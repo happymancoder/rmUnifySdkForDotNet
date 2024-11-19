@@ -173,7 +173,11 @@ namespace RM.Unify.Sdk.Client.SsoImpl
         {
             if (PlatformHelper.GetParam("wa") == "wsignoutcleanup1.0")
             {
-                _callbackApi.DoLogout();
+                var userId = PlatformHelper.GetParam("userId");
+                var issueInstant = PlatformHelper.GetParam("issueInstant");
+                var signature = PlatformHelper.GetParam("signature");
+
+                _callbackApi.DoLogout(userId, issueInstant, signature);
                 PlatformHelper.DeleteCookie("_rmunify_user");
                 PlatformHelper.SendTickResponse(endResponse);
 
