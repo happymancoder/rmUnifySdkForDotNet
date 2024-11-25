@@ -8,6 +8,11 @@ using System;
 using RM.Unify.Sdk.Client.Platform;
 using System.Reflection;
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Xml;
+using System.Globalization;
 
 namespace RM.Unify.Sdk.Client.SsoImpl
 {
@@ -177,6 +182,9 @@ namespace RM.Unify.Sdk.Client.SsoImpl
                 var issueInstant = PlatformHelper.GetParam("issueInstant");
                 var signature = PlatformHelper.GetParam("signature");
 
+                VerifyLogoutRequestSignature(userId, issueInstant, signature);
+                VerifyIssueInstant(issueInstant);
+
                 PlatformHelper.DeleteCookie("_rmunify_user");
                 _callbackApi.DoLogout(userId, issueInstant, signature);
 
@@ -194,6 +202,36 @@ namespace RM.Unify.Sdk.Client.SsoImpl
             }
             url +=  "&" + _LibVersionParam;
             PlatformHelper.RedirectBrowser(url, endResponse);
+        }
+
+        internal void VerifyLogoutRequestSignature(string userId, string issueInstant, string signature)
+        {
+            // Decode the Base64 signature
+            var signatureBytes = Convert.FromBase64String(signature);
+
+            // Convert the original data to bytes
+            var dataBytes = Encoding.UTF8.GetBytes($"userId={userId}&issueInstant={issueInstant}");
+
+            // Extract the public key (RSA)
+            using (var publicKey = SsoConfig.SsoCertificate.GetRSAPublicKey())
+            {
+                var isValid = publicKey.VerifyData(dataBytes, signatureBytes, HashAlgorithmName.SHA1,
+                    RSASignaturePadding.Pkcs1);
+
+                if(!isValid)
+                    throw new RmUnifySsoException(RmUnifySsoException.ERRORCODES_VERIFICATIONFAILED, "Logout failed: signature could not be verified");
+            }
+        }
+
+        internal void VerifyIssueInstant(string issueInstant)
+        {
+            if(!DateTime.TryParseExact(issueInstant, "yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal, out var issueDateTime))
+                throw new RmUnifySsoException(RmUnifySsoException.ERRORCODES_VERIFICATIONFAILED, "Logout failed: unable to parse the logout request issue time");
+
+            var notBefore = DateTime.UtcNow.AddMinutes(5);
+
+            if (issueDateTime < notBefore)
+                throw new RmUnifySsoException(RmUnifySsoException.ERRORCODES_FUTUREOREXPIREDTOKEN, "Logout failed: request is stale");
         }
     }
 }
