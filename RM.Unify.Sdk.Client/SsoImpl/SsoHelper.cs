@@ -177,9 +177,8 @@ namespace RM.Unify.Sdk.Client.SsoImpl
                 var issueInstant = PlatformHelper.GetParam("issueInstant");
                 var signature = PlatformHelper.GetParam("signature");
 
-                _callbackApi.DoLogout(userId, issueInstant, signature);
                 PlatformHelper.DeleteCookie("_rmunify_user");
-                PlatformHelper.SendTickResponse(endResponse);
+                _callbackApi.DoLogout(userId, issueInstant, signature);
 
                 return true;
             }

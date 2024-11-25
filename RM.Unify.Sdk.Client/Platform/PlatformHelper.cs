@@ -55,7 +55,7 @@ namespace RM.Unify.Sdk.Client.Platform
             response.ClearContent();
             response.StatusCode = 200;
             response.Cache.SetCacheability(HttpCacheability.NoCache);
-            response.ContentType = "image/png"; ;
+            response.ContentType = "image/png";
             response.BinaryWrite(_tickImage);
             if (endResponse)
             {
